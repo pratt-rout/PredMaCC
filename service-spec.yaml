@@ -1,0 +1,20 @@
+spec:
+  containers:
+  - name: predmacc
+    image: /<db>/<schema>/<repo>/predmacc:latest
+    env:
+      PORT: "8080"
+    resources:
+      requests:
+        memory: 1Gi
+        cpu: 500m
+      limits:
+        memory: 2Gi
+        cpu: 1000m
+    readinessProbe:
+      port: 8080
+      path: /api/health
+  endpoints:
+  - name: predmacc-endpoint
+    port: 8080
+    public: true

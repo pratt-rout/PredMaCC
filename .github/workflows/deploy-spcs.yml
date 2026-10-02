@@ -1,0 +1,44 @@
+name: Deploy PredMaCC to SPCS
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  SNOWFLAKE_ACCOUNT: ${{ vars.SNOWFLAKE_ACCOUNT }}
+  REGISTRY_HOST: ${{ vars.SNOWFLAKE_ACCOUNT }}.registry.snowflakecomputing.com
+  IMAGE_PATH: /predmacc_db/app/predmacc_repo/predmacc
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Snowflake CLI
+        uses: snowflakedb/snowflake-actions@v3
+        with:
+          use-oidc: true
+
+      - name: Test Snowflake connection
+        run: snow connection test -x
+
+      - name: Log in to Snowflake image registry
+        run: snow spcs image-registry login -x
+
+      - name: Build image
+        run: docker build --platform linux/amd64 -t predmacc:latest .
+
+      - name: Tag image
+        run: docker tag predmacc:latest ${{ env.REGISTRY_HOST }}${{ env.IMAGE_PATH }}:latest
+
+      - name: Push image
+        run: docker push ${{ env.REGISTRY_HOST }}${{ env.IMAGE_PATH }}:latest
+
+      - name: Deploy / update SPCS service
+        run: snow sql -f deploy.sql -x
