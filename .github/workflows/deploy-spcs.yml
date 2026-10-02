@@ -11,7 +11,6 @@ permissions:
 
 env:
   SNOWFLAKE_ACCOUNT: ${{ vars.SNOWFLAKE_ACCOUNT }}
-  REGISTRY_HOST: ${{ vars.SNOWFLAKE_ACCOUNT }}.registry.snowflakecomputing.com
   IMAGE_PATH: /predmacc_db/app/predmacc_repo/predmacc
 
 jobs:
@@ -27,6 +26,9 @@ jobs:
 
       - name: Test Snowflake connection
         run: snow connection test -x
+
+      - name: Compute lowercase registry host
+        run: echo "REGISTRY_HOST=$(echo ${{ env.SNOWFLAKE_ACCOUNT }} | tr '[:upper:]' '[:lower:]').registry.snowflakecomputing.com" >> "$GITHUB_ENV"
 
       - name: Log in to Snowflake image registry
         run: snow spcs image-registry login -x
